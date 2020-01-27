@@ -1,0 +1,49 @@
+package com.csl.los_external_sources.perfios;
+
+import java.io.IOException;
+import java.util.Date;
+import org.springframework.web.multipart.MultipartFile;
+import com.csl.los_external_sources.Constants;
+import com.fasterxml.jackson.databind.JsonNode;
+
+public abstract class LOSFile {
+  public abstract String read(String path) throws IOException;
+
+  /**
+   * 
+   * Method to write file
+   * 
+   * METHOD TO TAKEBASE64 FILE AND EXPORT IT AS SPECIFIED FORMAT ON THE SERVER & RETURN THE FILEPATH
+   * 
+   * 
+   * Here File path is : basePath/accountId/loanId/fileType.fileFormat
+   * 
+   * here file data is in base64 format
+   * 
+   * @throws Exception
+   */
+  public abstract String write(String basePath, int accountId, int loanApplicationId,
+      int customerId, String documentType, MultipartFile[] multipartFiles) throws IOException;
+
+
+
+  public static LOSFile getFileSystem(JsonNode configuration) {
+    LOSFile losFile = new LocalFileSystem();
+
+    String fileSystem = configuration.get("upload_file_system").asText();
+    if (fileSystem.equalsIgnoreCase(Constants.UPLOAD_FILESYSTEM_S3)) {
+      losFile = new S3(configuration);
+    } else if (fileSystem.equalsIgnoreCase(Constants.UPLOAD_FILESYSTEM_LOCALFILESYSTEM)) {
+      losFile = new LocalFileSystem();
+    }
+    return losFile;
+  }
+
+
+
+  public static String getFilePath(String baseDir, int accountId, int loanApplicationId,
+      int customerId, String fileType) {
+    return baseDir + "/" + accountId + "/" + loanApplicationId + "/" + customerId + "/" + fileType;
+  }
+
+}
